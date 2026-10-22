@@ -4,6 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
+from fastapi.encoders import jsonable_encoder
 
 from src.ner_pipeline import NERPipeline
 
@@ -31,7 +32,17 @@ class ArticleRequest(BaseModel):
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
-        content={"detail": "Invalid input format or validation error", "errors": exc.errors()}
+        content={
+            "detail": "Invalid input format or validation error",
+            "errors": [
+                {
+                    "loc": err.get("loc"),
+                    "msg": err.get("msg"),
+                    "type": err.get("type")
+                }
+                for err in exc.errors()
+            ]
+        }
     )
 
 @app.exception_handler(HTTPException)
