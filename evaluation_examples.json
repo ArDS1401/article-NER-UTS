@@ -20,50 +20,50 @@
       {
         "text": "UOB Malaysia",
         "label": "ORG",
-        "start": 57,
-        "end": 69
+        "start": 56,
+        "end": 68
       },
       {
         "text": "RHB Banking Group",
         "label": "ORG",
-        "start": 71,
-        "end": 88
+        "start": 70,
+        "end": 87
       },
       {
         "text": "Maybank",
         "label": "ORG",
-        "start": 93,
-        "end": 100
+        "start": 92,
+        "end": 99
       },
       {
         "text": "Kuala Lumpur",
         "label": "GPE",
-        "start": 139,
-        "end": 151
+        "start": 137,
+        "end": 149
       },
       {
         "text": "Monday",
         "label": "DATE",
-        "start": 155,
-        "end": 161
+        "start": 153,
+        "end": 159
       },
       {
         "text": "Khairussaleh Ramli",
         "label": "PERSON",
-        "start": 188,
-        "end": 206
+        "start": 185,
+        "end": 203
       },
       {
         "text": "Maybank",
         "label": "ORG",
-        "start": 220,
-        "end": 227
+        "start": 216,
+        "end": 223
       },
       {
         "text": "Malaysia",
         "label": "GPE",
-        "start": 264,
-        "end": 272
+        "start": 271,
+        "end": 279
       }
     ]
   },
@@ -132,14 +132,14 @@
       {
         "text": "Selangor",
         "label": "GPE",
-        "start": 119,
-        "end": 127
+        "start": 122,
+        "end": 130
       },
       {
         "text": "December 2026",
         "label": "DATE",
-        "start": 171,
-        "end": 184
+        "start": 174,
+        "end": 187
       }
     ]
   },
@@ -158,20 +158,26 @@
       {
         "text": "Bank Negara Malaysia",
         "label": "ORG",
-        "start": 58,
-        "end": 78
+        "start": 59,
+        "end": 79
       },
       {
         "text": "Putrajaya",
         "label": "GPE",
-        "start": 127,
-        "end": 136
+        "start": 130,
+        "end": 139
+      },
+      {
+        "text": "yesterday",
+        "label": "DATE",
+        "start": 140,
+        "end": 149
       },
       {
         "text": "Abdul Rasheed Ghaffour",
         "label": "PERSON",
-        "start": 157,
-        "end": 179
+        "start": 160,
+        "end": 182
       }
     ]
   },
@@ -190,26 +196,26 @@
       {
         "text": "Bursa Malaysia",
         "label": "ORG",
-        "start": 52,
-        "end": 66
+        "start": 54,
+        "end": 68
       },
       {
         "text": "Friday",
         "label": "DATE",
-        "start": 84,
-        "end": 90
+        "start": 86,
+        "end": 92
       },
       {
         "text": "Hong Leong Bank",
         "label": "ORG",
-        "start": 132,
-        "end": 147
+        "start": 135,
+        "end": 150
       },
       {
         "text": "Maybank",
         "label": "ORG",
-        "start": 152,
-        "end": 159
+        "start": 155,
+        "end": 162
       }
     ]
   },
@@ -228,26 +234,26 @@
       {
         "text": "Cyberjaya",
         "label": "GPE",
-        "start": 44,
-        "end": 53
+        "start": 45,
+        "end": 54
       },
       {
         "text": "Malaysia Debt Ventures",
         "label": "ORG",
-        "start": 55,
-        "end": 77
+        "start": 56,
+        "end": 78
       },
       {
         "text": "MDV",
         "label": "ORG",
-        "start": 81,
-        "end": 84
+        "start": 82,
+        "end": 85
       },
       {
         "text": "Cyberjaya",
         "label": "GPE",
-        "start": 107,
-        "end": 116
+        "start": 110,
+        "end": 119
       }
     ]
   },
@@ -266,26 +272,26 @@
       {
         "text": "Maybank Foundation",
         "label": "ORG",
-        "start": 56,
-        "end": 74
+        "start": 57,
+        "end": 75
       },
       {
         "text": "Penang",
         "label": "GPE",
-        "start": 110,
-        "end": 116
+        "start": 112,
+        "end": 118
       },
       {
         "text": "Shahril Azuar Jimin",
         "label": "PERSON",
-        "start": 124,
-        "end": 143
+        "start": 126,
+        "end": 145
       },
       {
         "text": "November 2026",
         "label": "DATE",
-        "start": 178,
-        "end": 191
+        "start": 179,
+        "end": 192
       }
     ]
   },
@@ -310,8 +316,8 @@
       {
         "text": "Malaysia",
         "label": "GPE",
-        "start": 144,
-        "end": 152
+        "start": 145,
+        "end": 153
       }
     ]
   },
