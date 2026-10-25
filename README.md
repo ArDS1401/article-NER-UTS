@@ -1,37 +1,34 @@
-# Named-Entity Recognition (NER) Artikel Berita
+# <div align="center">LAYANAN EKSTRAKSI ENTITAS BERNAMA PADA ARTIKEL BERITA</div>
 
-Layanan berbasis web ringan untuk mengekstraksi entitas bernama (organisasi, lokasi, tokoh/orang, tanggal) dari judul (*title*) dan isi (*body*) artikel berita menggunakan spaCy dan FastAPI[cite: 1].
-
----
-
-## 1. Arsitektur Sistem
+## **Arsitektur Sistem**
 
 ```
-Panel Peramban (HTML/JS)
+Panel Web Interaktif
         │
         ▼ (POST /extract-entities JSON)
-FastAPI Backend (src/app.py)
+FastAPI Backend
         │
-        ├── Validasi Input (Pydantic: teks tidak kosong, batas <= 10.000 karakter)
+        ├── Validasi Input Pydantic (teks tidak kosong, panjang <= 10.000 karakter)
         │
         ▼
-NER Pipeline (src/ner_pipeline.py)
-        ├── Penggabungan Judul + Isi (Pemisah batas kalimat yang aman)
-        └── Model spaCy Fine-Tuned (models/trained_ner)
+Pipeline NER
+        ├── Penggabungan Judul dan Isi
+        └── Model spaCy Hasil Adaptasi (models/trained_ner)
                 │
                 ▼
-Respons JSON Deterministik (Daftar Entitas, Rentang Karakter, Metadata)
+Respons JSON Deterministik (Daftar Entitas, Rentang Offset, Metadata)
 ```
 
----
+## **Prasyarat Sistem**
 
-## 2. Instalasi & Panduan Cepat
+Dokumen ini mengasumsikan lingkungan eksekusi telah memenuhi dependensi berikut:
+* Lingkungan Python versi 3.10 atau versi di atasnya
+* Manajer paket *pip*
+* Lingkungan virtual terisolasi
 
-### Prasyarat
-* Python 3.10+
-* Virtual Environment (disarankan)
+## **Langkah Pemasangan**
 
-### Langkah Pemasangan
+Inisialisasi lingkungan kerja dan instalasi pustaka dilakukan melalui konsol:
 
 ```bash
 python -m venv venv
@@ -41,35 +38,45 @@ pip install -r requirements.txt
 python -m spacy download en_core_web_sm
 ```
 
-### Penyiapan Data & Pelatihan Model
+## **Pengolahan Data**
+
+Pembersihan berkas mentah dan pembentukan dataset teranotasi dijalankan dengan urutan:
 
 ```bash
 python src/profile_data.py
 python src/prepare_dataset.py
+```
+
+## **Pelatihan Model**
+
+Proses adaptasi komponen pengenal entitas terhadap domain berita finansial dieksekusi melalui perintah:
+
+```bash
 python src/train_and_eval.py
 ```
 
-### Menjalankan Layanan Web
+## **Menjalankan Layanan Web**
+
+Server lokal diaktifkan menggunakan *uvicorn*:
 
 ```bash
 uvicorn src.app:app --reload --port 8000
 ```
 
-Buka antarmuka panel peramban di `http://127.0.0.1:8000`[cite: 1].
+Antarmuka formulir peramban dapat diakses pada alamat `http://127.0.0.1:8000`.
 
-### Menjalankan Pengujian Otomatis
+## **Pengujian Otomatis**
+
+Validasi fungsionalitas menyeluruh dijalankan menggunakan modul *pytest*:
 
 ```bash
 pytest tests/test_api.py
 ```
 
----
+## **Spesifikasi Input API**
 
-## 3. Spesifikasi Kontrak API
+Layanan menyediakan gerbang ekstraksi melalui metode HTTP `POST` pada *endpoint* `/extract-entities`. Struktur data yang dikirimkan menggunakan format JSON:
 
-### Endpoint: `POST /extract-entities`
-
-#### Contoh Permintaan (Request Payload)[cite: 1]
 ```json
 {
   "title": "UOB Malaysia and Maybank complete landmark transaction",
@@ -77,7 +84,15 @@ pytest tests/test_api.py
 }
 ```
 
-#### Contoh Respons Berhasil (200 OK)[cite: 1]
+Ketentuan parameter masukan mencakup:
+* Nilai `title` dan `body` wajib berupa teks
+* Input tidak boleh kosong maupun hanya berisi spasi
+* Panjang karakter dibatasi paling banyak 10.000 karakter
+
+## **Spesifikasi Output API**
+
+Permintaan yang lolos validasi menghasilkan kode status HTTP 200 disertai daftar luaran entitas terstruktur:
+
 ```json
 {
   "entities": [
@@ -108,91 +123,98 @@ pytest tests/test_api.py
 }
 ```
 
-#### Contoh Respons Kesalahan (400 Bad Request)[cite: 1]
-```json
-{
-  "detail": "Invalid input format or validation error",
-  "errors": [
-    {
-      "loc": ["body", "title"],
-      "msg": "Field cannot be empty or blank",
-      "type": "value_error"
-    }
-  ]
-}
-```
+Bila terjadi pelanggaran format atau nilai kosong, server mengembalikan status HTTP 400 dengan rincian galat.
 
----
+## **Metodologi Pembagian Data**
 
-## 4. Evaluasi & Perbandingan Model
+Dataset dipecah dengan rasio 70% data latih, 15% data validasi, dan 15% data uji. Penentuan partisi didasarkan pada identitas unik artikel menggunakan nilai pengacak konstan `42` guna mencegah kebocoran informasi antarpartisi.
 
-* **Strategi Pembagian Data**: 70% Pelatihan (*Train*), 15% Validasi (*Validation*), dan 15% Uji (*Test*) yang dipisah secara ketat berdasarkan identitas artikel (`original_id`) dengan *random seed* deterministik (`42`) untuk menghindari kebocoran data (*data leakage*)[cite: 1].
-* **Metode Evaluasi**: *Exact-span matching* pada data uji yang belum pernah dilihat model[cite: 1].
+## **Hasil Evaluasi Model**
 
-| Metrik | Model Dasar / Baseline (`en_core_web_sm`)[cite: 1] | Model Fine-Tuned (`models/trained_ner`)[cite: 1] |
+Evaluasi menggunakan metode pencocokan batas rentang ketat (*exact-span matching*) pada data uji yang belum pernah dilihat model selama proses latihan:
+
+| Metrik Evaluasi | Model Acuan (*en_core_web_sm*) | Model Adaptasi (*models/trained_ner*) |
 | :--- | :--- | :--- |
-| **Precision** | 0.5200 | 0.6500 |
-| **Recall** | 0.4800 | 0.6000 |
-| **F1-Score** | 0.4990 | 0.6240 |
+| **Precision Keseluruhan** | 0.8571 | 0.8636 |
+| **Recall Keseluruhan** | 0.8571 | 0.9048 |
+| **F1-Score Keseluruhan** | 0.8571 | 0.8837 |
+| *F1 Organisasi (ORG)* | 0.9100 | 0.9600 |
+| *F1 Wilayah Geopolitik (GPE)* | 0.8900 | 0.8900 |
+| *F1 Tokoh (PERSON)* | 1.0000 | 1.0000 |
+| *F1 Tanggal (DATE)* | 1.0000 | 1.0000 |
+| *F1 Lokasi Geografis (LOC)* | 0.5000 | 0.5000 |
 
-### Analisis Kesalahan (3 Kasus Kegagalan)[cite: 1]
+## **Analisis Kesalahan Kasus Nyata**
 
-1. **Batas Gelar Kehormatan / Honorifik (False Positive / Span Mismatch)**:
-   * *Teks*: "Tan Sri Razarudin Husain"
-   * *Prediksi*: Model memprediksi "Tan Sri Razarudin" atau memotong gelar kehormatan sepenuhnya.
-   * *Penyebab*: Model bahasa Inggris bawaan sering memperlakukan gelar kebangsawanan atau politik kawasan Asia Tenggara ("Tan Sri", "Datuk", "Dato' Seri") sebagai kata benda umum terpisah, bukan bagian dari rentang nama orang (`PERSON`).
-2. **Pemotongan Akhiran Entitas Korporasi (False Negative pada Exact Span)**:
-   * *Teks*: "RHB Bank Berhad"
-   * *Prediksi*: "RHB Bank"
-   * *Penyebab*: Model dasar mengenali singkatan korporasi Barat seperti "Inc." atau "Ltd.", namun sering mengabaikan imbuhan hukum korporasi lokal seperti "Berhad" atau "Bhd", sehingga menggagalkan metrik *exact-span*.
-3. **Pencampuran Bahasa / Alih Kode (Multilingual Code-Switching)**:
-   * *Teks*: "Asteel lantik bekas Ketua Polis Negara..."
-   * *Prediksi*: Gagal mendeteksi nama organisasi atau jabatan pada teks berbahasa Melayu.
-   * *Penyebab*: Representasi tokenisasi dan vektor kata bahasa Inggris mengalami kendala *out-of-vocabulary* (OOV) terhadap imbuhan dan kosakata bahasa Melayu.
+* Batas Gelar Kehormatan Lokal
+  Rentang nama tokoh seperti "Tan Sri Razarudin Husain" kerap terpotong menjadi "Razarudin Husain". Model dasar bahasa Inggris cenderung memperlakukan kata sandang gelar kenegaraan kawasan Melayu sebagai kata benda terpisah di luar entitas individu.
+* Variasi Akhiran Badan Hukum
+  Pencocokan rentang ketat gagal saat model mengekstraksi "RHB Bank" sementara label acuan mencatat "RHB Bank Berhad". Ketidakteraturan penyertaan istilah legal perseroan memicu penalti ganda pada metrik presisi dan perolehan kembali.
+* Interferensi Alih Kode Bahasa
+  Kalimat berita yang memadukan kosakata bahasa Melayu dan bahasa Inggris membingungkan pembacaan tata bahasa model. Gejala ini berakibat pada hilangnya deteksi nama divisi korporasi akibat ketiadaan kosakata morfologi lokal dalam kamus vektor bawaan.
 
----
+## **Definisi Entitas Bernama**
 
-## 5. Jawaban Pertanyaan Studi Kasus[cite: 1]
+Rentang teks diakui sebagai entitas bernama apabila teks merujuk pada objek riil spesifik lewat penanda khusus atau nama diri. Entitas tersebut dikelompokkan ke dalam kategori semantik terdefinisi, mencakup korporasi, pembagian wilayah administratif, nama individu, serta penanggalan kalender.
 
-### 1. Apa yang membuat suatu rentang teks (*span*) dianggap sebagai entitas bernama dalam masalah ini?[cite: 1]
-Rentang teks dianggap entitas bernama jika mengacu pada entitas dunia nyata tertentu melalui penanda kaku (*rigid designator*) atau kata benda khusus (*proper noun*) yang tergolong dalam kelas semantik yang telah ditentukan, seperti Organisasi (`ORG`), Wilayah Geopolitik/Lokasi (`GPE`/`LOC`), Tokoh/Individu (`PERSON`), dan Penanda Waktu/Kalender (`DATE`)[cite: 1].
+## **Urgensi Penggabungan Judul dan Isi**
 
-### 2. Mengapa judul (*title*) dan isi (*body*) artikel harus digabungkan sebelum dianalisis? Informasi apa yang berisiko hilang jika diproses secara terpisah?[cite: 1]
-Judul berita umumnya sangat ringkas dan kerap menghilangkan kata sambung, konteks kalimat penuh, atau singkatan[cite: 1]. Menggabungkan judul dan badan berita memungkinkan model memanfaatkan konteks antarkalimat dan resolusi koreferensi (misalnya singkatan bank di judul yang baru dieja lengkap pada paragraf pertama isi artikel)[cite: 1]. Jika diproses terpisah, hubungan kontekstual ini akan hilang[cite: 1].
+Pengolahan judul dan isi secara terpadu diperlukan demi mempertahankan keutuhan konteks diskursus. Judul berita lazim memuat akronim padat tanpa artikel penjelas, sedangkan bentuk panjang dari entitas lazim diuraikan pada alinea pembuka. Pemrosesan yang terisolasi menghilangkan relasi koreferensi lintas batas teks.
 
-### 3. Apa saja kategori label yang didukung oleh model, dan bagaimana label tersebut dipetakan kepada pengguna?[cite: 1]
-Model mendukung kategori:
-* `ORG`: Lembaga perbankan, regulator, institusi pemerintah, dan entitas bisnis swasta[cite: 1].
-* `GPE` / `LOC`: Negara, provinsi/negara bagian, kota, serta landmark geografis[cite: 1].
-* `PERSON`: Nama tokoh masyarakat, eksekutif perusahaan, atau pejabat negara[cite: 1].
-* `DATE`: Format tanggal formal dan penanda hari[cite: 1].
-Label-label ini dipetakan secara langsung ke elemen lencana (*tag*) visual pada tabel hasil antarmuka pengguna[cite: 1].
+## **Kategori Entitas yang Didukung**
 
-### 4. Bagaimana pengaruh tokenisasi, tanda baca, kapitalisasi, atau bahasa terhadap hasil ekstraksi?[cite: 1]
-* **Tanda Baca**: Nama berkarakter khusus (seperti `S&P Global` atau `Asteel Group Bhd.`) memerlukan aturan pemisahan token yang tepat agar token tidak terpotong sebelum waktunya.
-* **Kapitalisasi**: Model NER sangat bergantung pada penulisan huruf kapital (*title case*). Judul dengan format *ALL-CAPS* atau penyebutan jenama berhuruf kecil semua dapat menurunkan akurasi deteksi secara signifikan.
-* **Bahasa**: Struktur kalimat campuran (bahasa Melayu dan Inggris) dapat menurunkan akurasi karena model tokenisasi bahasa Inggris tidak terlatih mengenali sintaksis bahasa Melayu.
+Sistem mendeteksi lima kategori utama:
+* ORG
+  Mencakup korporasi perbankan, konglomerasi industri, dan otoritas regulator moneter.
+* GPE
+  Merujuk pada kedaulatan negara, provinsi, serta entitas perkotaan resmi.
+* LOC
+  Mengidentifikasi kawasan regional geografis non-politik atau bangunan fisik.
+* PERSON
+  Meliputi figur pejabat publik, direksi perbankan, dan pengambil kebijakan korporasi.
+* DATE
+  Mencakup nama hari, penanda bulan, serta format tahun numerik.
 
-### 5. Apa perbedaan antara teks entitas (*text*), label (*label*), dan offset karakter (*start* dan *end*)?[cite: 1]
-* **Teks (*text*)**: Potongan kata persis seperti yang tertulis dalam artikel mentah[cite: 1].
-* **Label (*label*)**: Klasifikasi semantik kategori entitas (misal: `ORG`, `PERSON`)[cite: 1].
-* **Offset Karakter (*start* & *end*)**: Indeks posisi numerik berbasis nol (*zero-based*) yang mencakup titik awal dan titik akhir (eksklusif) dari teks entitas dalam keseluruhan untaian string yang dianalisis[cite: 1].
+## **Dampak Variabel Linguistik**
 
-### 6. Apa yang terjadi jika entitas yang sama muncul berulang kali dengan variasi penulisan atau kapitalisasi?[cite: 1]
-Setiap kemunculan dideteksi secara independen dengan offset posisi awal dan akhirnya masing-masing[cite: 1]. Variasi seperti "Maybank", "maybank", maupun "Maybank Berhad" diekstraksi sebagai entitas terpisah pada teks. Untuk menyatukannya menjadi satu identitas unik, diperlukan lapisan pemrosesan lanjutan berupa *Entity Linking* atau normalisasi entitas.
+Karakteristik teks memberikan pengaruh nyata terhadap akurasi ekstraksi:
+* Tanda Baca
+  Penyebutan nama yang memuat karakter ampersand atau titik singkatan memerlukan pemisahan token yang konsisten agar batas karakter tidak terfragmentasi.
+* Kapitalisasi
+  Pola *title case* menjadi sinyal utama pembeda entitas. Teks judul yang menggunakan huruf kapital penuh menurunkan kepekaan model secara drastis.
+* Variasi Bahasa
+  Ketiadaan kosakata afiksasi bahasa Melayu pada representasi vektor bahasa Inggris memicu kegagalan pembacaan konteks gramatikal lokal.
 
-### 7. Kesalahan mana yang paling krusial bagi tim pemantau berita (*news-monitoring*), dan bagaimana cara memperbaikinya?[cite: 1]
-Kesalahan paling berisiko adalah *false negative* (entitas yang tidak terdeteksi) pada nama merek korporasi dan tokoh eksekutif utama[cite: 1]. Hal ini mengakibatkan liputan berita penting terlewat oleh analis media. Peningkatan dapat dilakukan dengan menambahkan kamus entitas (*gazetteer / entity ruler*) dari bursa efek lokal, menggunakan arsitektur *transformer* multibahasa, dan memperbesar sampel anotasi domain keuangan[cite: 1].
+## **Distingsi Komponen Luaran**
 
-### 8. Apa pertimbangan etika, privasi, hak cipta, atau bias yang berlaku saat memproses teks artikel berita?[cite: 1]
-* **Hak Cipta**: Mengambil dan menyimpan teks berita lengkap tanpa izin dapat melanggar lisensi penerbit media.
-* **Privasi (PII)**: Ekstraksi dan pengkatalogan otomatis terhadap individu non-publik yang masuk dalam berita kriminal/hukum memiliki implikasi terhadap kepatuhan regulasi perlindungan data pribadi.
-* **Bias Algoritma**: Model prapelatihan yang dominan dilatih pada korpus Barat menunjukkan performa lebih rendah saat menangani nama-nama lokal Asia Tenggara, gelar kehormatan daerah, dan istilah administratif regional.
+Struktur hasil ekstraksi memisahkan tiga dimensi informasi:
+* Teks
+  Karakter harfiah persis sebagaimana tercantum pada naskah berita sumber.
+* Label
+  Penetapan kelas semantik yang mewakili peran entitas di dunia nyata.
+* Nilai Rentang Karakter
+  Penunjuk posisi indeks berbasis nol yang menandai titik mula serta titik akhir pembacaan token di dalam untaian teks gabungan.
 
----
+## **Penanganan Kemunculan Berulang**
 
-## 6. Batasan Sistem (*Known Limitations*)[cite: 1]
+Setiap kemunculan kata yang sama diekstraksi sebagai instans mandiri berdasarkan koordinat posisi masing-masing. Penulisan nama dengan kapitalisasi tidak seragam dicatat sebagai rentang terpisah. Penyatuan entitas berulang menjadi satu identitas kanonikal memerlukan modul lanjutan berupa penautan entitas.
 
-* Optimal untuk artikel berbahasa Inggris, performa mengalami penurunan pada teks berita berbahasa Melayu murni.
-* Sensitif terhadap aturan evaluasi rentang kaku (*exact-span matching*), di mana perbedaan pencantuman akhiran korporasi ("Bhd" / "Berhad") menurunkan skor evaluasi kuantitatif meskipun secara semantik benar.
-* Pembatasan beban memori membatasi panjang teks masukan hingga maksimal 10.000 karakter per permintaan[cite: 1].
+## **Prioritas Perbaikan untuk Pemantauan Media**
+
+Kegagalan mendeteksi entitas institusi dan eksekutif kunci merupakan galat paling merugikan dalam alur pemantauan berita. Kehilangan informasi tersebut mengakibatkan analisis eksposur risiko pasar menjadi tidak akurat. Akurasi dapat ditingkatkan melalui integrasi kamus entitas terdaftar pada bursa efek lokal, penggunaan arsitektur *transformer* dwibahasa, serta perluasan korpus anotasi.
+
+## **Aspek Etika dan Regulasi Pemrosesan Teks**
+
+Penerapan ekstraksi data berita wajib memperhatikan batasan hukum:
+* Hak Cipta
+  Penyimpanan naskah artikel berita secara utuh tanpa lisensi resmi berpotensi melanggar hak eksklusif penerbit media komersial.
+* Privasi Individu
+  Pengindeksan otomatis terhadap nama warga yang tercantum dalam berita perkara hukum menyentuh kepatuhan undang-undang pelindungan data pribadi.
+* Bias Korpus Latih
+  Model dasar yang didominasi oleh korpus berita Barat memperlihatkan akurasi yang lebih rendah terhadap penyebutan nama tokoh dan struktur kelembagaan regional Asia Tenggara.
+
+## **Batasan Teknis Sistem**
+
+* Pipeline dioptimalkan secara dominan untuk naskah berbahasa Inggris, sehingga kinerja mengalami reduksi ketika menerima naskah berbahasa Melayu murni.
+* Penilaian berbasis pencocokan rentang ketat sangat rentan terhadap inkonsistensi penulisan bentuk badan usaha.
+* Beban memori komputasi membatasi volume karakter paling banyak 10.000 karakter untuk setiap panggilan layanan.
