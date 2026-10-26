@@ -13,22 +13,7 @@ Layanan NER (Named Entity Recognition) untuk artikel berita finansial berbasis F
 
 ## Architecture
 
-```
-Interactive Web UI
-        │
-        ▼ (POST /extract-entities, JSON)
-FastAPI Backend
-        │
-        ├── Pydantic input validation (non-empty text, length <= 10,000 characters)
-        │
-        ▼
-NER Pipeline
-        ├── Title + body concatenation
-        └── Fine-tuned spaCy model (models/trained_ner)
-                │
-                ▼
-Deterministic JSON response (entities, offsets, metadata)
-```
+<img src="./img/NER-Architecture-Diagram.png" width="300" alt="Architecture Diagram">
 
 ## Prerequisites
 
